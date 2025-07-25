@@ -53,6 +53,7 @@ const Announcements = () => {
 
   const deleteAnnouncement = async (id:string)=>{
     try {
+      if(!window.confirm('Delete this announcement?')) return;
       await api.delete(`/announcements/${id}`);
       setAnnouncements(prev=>prev.filter(a=>a._id!==id));
       toast({title:'Deleted'});
@@ -262,6 +263,10 @@ const Announcements = () => {
                 <span className="text-xs font-medium">Pinned</span>
               </div>
             )}
+            {user?.role==='admin' && ((typeof announcement.author==='string' ? announcement.author===user.id : (announcement.author as any)._id===user.id)) && (              <Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={()=>deleteAnnouncement(announcement._id!)} title="Delete">
+                <Trash className="h-4 w-4 text-destructive" />
+              </Button>
+            )}
             
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -300,11 +305,6 @@ const Announcements = () => {
                   <span>{announcement.comments}</span>
                 </span>
                 <span>{announcement.views} views</span>
-                {user?.role==='admin' && typeof announcement.author!=='string' && (announcement.author as any)._id===user.id && (
-                  <Button variant="ghost" size="icon" onClick={()=>deleteAnnouncement(announcement._id!)}>
-                    <Trash className="h-4 w-4 text-destructive"/>
-                  </Button>)
-                }
                 <Button variant="ghost" size="sm" className="text-primary hover:text-primary-glow">
                   ❤️ {announcement.likes}
                 </Button>

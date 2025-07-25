@@ -45,6 +45,7 @@ const categories = [
 const LostFound = () => {
   const handleDelete = async(id:string)=>{
     try{
+      if(!window.confirm('Delete this report?')) return;
       await api.delete(`/lostfound/${id}`);
       toast({title:'Deleted'});
       refetch();
@@ -151,7 +152,7 @@ const LostFound = () => {
               )}
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold text-lg">{item.title}</h2>
-                {item.isResolved && <Badge variant="success">Found</Badge>}
+                {item.isResolved && <Badge className="bg-green-500 text-white">Found</Badge>}
               </div>
               <p className="text-muted-foreground text-sm">{item.description}</p>
               <div className="flex gap-2 items-center text-sm">
@@ -191,7 +192,7 @@ const LostFound = () => {
               {(user?.role === "admin" || item.reporter === user?.id) && !item.isResolved && (
                 <Button
                   size="sm"
-                  variant="success"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                   onClick={async () => {
                     await handleClose(item._id);
                     refetch();

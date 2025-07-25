@@ -27,3 +27,8 @@ export const updateStatus = async (req: Request, res: Response) => {
   await complaint.save();
   res.json(complaint);
 };
+
+export const deleteComplaint = async (req: Request, res: Response) => {
+  await Complaint.findByIdAndDelete(req.params.id);
+  res.status(204).end();
+};

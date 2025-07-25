@@ -118,7 +118,8 @@ const ComplaintPage = () => {
                   >
                     Resolve
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={async()=>{await api.delete(`/complaints/${c._id}`);refetch();}}>
+                  <Button size="icon" variant="ghost" onClick={async()=>{if(!window.confirm('Delete this complaint?')) return;
+                    await api.delete(`/complaints/${c._id}`);refetch();}}>
                     <Trash className="h-4 w-4 text-destructive"/>
                   </Button>
                 </div>
