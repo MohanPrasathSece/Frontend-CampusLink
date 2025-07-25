@@ -1,4 +1,5 @@
-import { useState } from "react";
+import Header from "@/components/Header";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +12,32 @@ import {
   User,
   Pin,
   MessageSquare,
-  ChevronDown
+  ChevronDown,
+  Trash
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/services/api";
+import { toast } from "@/components/ui/use-toast";
+
+interface Announcement {
+  _id?: string;
+  id?: string;
+  timestamp?: string;
+  role?: string;
+  title: string;
+  content: string;
+  category: string;
+  createdAt?: string;
+  author?: { name?: string } | string;
+  isPinned?: boolean;
+  priority?: string;
+  likes?: number;
+  comments?: number;
+  views?: number;
+}
 
 const Announcements = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -26,7 +49,40 @@ const Announcements = () => {
     { id: "urgent", label: "Urgent", color: "destructive" }
   ];
 
-  const announcements = [
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  const deleteAnnouncement = async (id:string)=>{
+    try {
+      await api.delete(`/announcements/${id}`);
+      setAnnouncements(prev=>prev.filter(a=>a._id!==id));
+      toast({title:'Deleted'});
+    } catch { toast({title:'Delete failed',variant:'destructive'}); }
+  };
+
+  // fetch announcements
+  useEffect(() => {
+    api
+      .get("/announcements")
+      .then((res) => setAnnouncements(res.data))
+      .catch(() => toast({ title: "Failed to load announcements", variant: "destructive" }));
+  }, []);
+
+  // admin form state
+  const [newAnn, setNewAnn] = useState<Omit<Announcement, "_id">>({ title: "", content: "", category: "academic" });
+
+  const handleCreate = async () => {
+    try {
+      await api.post("/announcements", newAnn);
+      toast({ title: "Announcement posted" });
+      const res = await api.get("/announcements");
+      setAnnouncements(res.data);
+      setNewAnn({ title: "", content: "", category: "academic" });
+    } catch {
+      toast({ title: "Create failed", variant: "destructive" });
+    }
+  };
+
+  /*
     {
       id: 1,
       title: "Mid-term Examination Schedule Released",
@@ -98,6 +154,7 @@ const Announcements = () => {
       views: 578
     }
   ];
+  */
 
   const filteredAnnouncements = announcements
     .filter(announcement => 
@@ -133,7 +190,9 @@ const Announcements = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <>
+      <Header />
+      <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <div className="bg-gradient-primary rounded-2xl p-6 text-white shadow-glow mb-6">
         <div className="flex items-center justify-between">
@@ -144,9 +203,6 @@ const Announcements = () => {
             </h1>
             <p className="text-white/90">Stay updated with the latest campus news and events</p>
           </div>
-          <Button variant="secondary" className="bg-white text-primary hover:bg-white/90">
-            Post Announcement
-          </Button>
         </div>
       </div>
 
@@ -178,6 +234,21 @@ const Announcements = () => {
         </div>
       </Card>
 
+      {/* Admin create */}
+      {user?.role === "admin" && (
+        <Card className="p-4 space-y-3 mb-6">
+          <h3 className="font-semibold text-lg flex items-center gap-2"><Megaphone className="h-4 w-4"/> Post Announcement</h3>
+          <Input placeholder="Title" value={newAnn.title} onChange={(e)=>setNewAnn({...newAnn,title:e.target.value})}/>
+          <textarea className="border rounded p-2 w-full" rows={4} placeholder="Content" value={newAnn.content} onChange={(e)=>setNewAnn({...newAnn,content:e.target.value})}></textarea>
+          <select className="border rounded p-2 w-full" value={newAnn.category} onChange={(e)=>setNewAnn({...newAnn,category:e.target.value})}>
+            {categories.filter(c=>c.id!="all").map(c=> (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </select>
+          <Button onClick={handleCreate}>Publish</Button>
+        </Card>
+      )}
+
       {/* Announcements List */}
       <div className="space-y-4">
         {filteredAnnouncements.map((announcement) => (
@@ -197,8 +268,8 @@ const Announcements = () => {
                 <Badge variant={getCategoryColor(announcement.category) as any}>
                   {announcement.category.charAt(0).toUpperCase() + announcement.category.slice(1)}
                 </Badge>
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority)}`}>
-                  {announcement.priority.toUpperCase()}
+                <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority ?? 'medium')}`}>
+                  {(announcement.priority ?? 'medium').toUpperCase()}
                 </div>
               </div>
               <span className="text-sm text-muted-foreground">{announcement.timestamp}</span>
@@ -218,7 +289,7 @@ const Announcements = () => {
                   <User className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{announcement.author}</p>
+                  <p className="text-sm font-medium text-foreground">{typeof announcement.author === 'string' ? announcement.author : announcement.author?.name}</p>
                   <p className="text-xs text-muted-foreground">{announcement.role}</p>
                 </div>
               </div>
@@ -229,6 +300,11 @@ const Announcements = () => {
                   <span>{announcement.comments}</span>
                 </span>
                 <span>{announcement.views} views</span>
+                {user?.role==='admin' && typeof announcement.author!=='string' && (announcement.author as any)._id===user.id && (
+                  <Button variant="ghost" size="icon" onClick={()=>deleteAnnouncement(announcement._id!)}>
+                    <Trash className="h-4 w-4 text-destructive"/>
+                  </Button>)
+                }
                 <Button variant="ghost" size="sm" className="text-primary hover:text-primary-glow">
                   ❤️ {announcement.likes}
                 </Button>
@@ -246,6 +322,7 @@ const Announcements = () => {
         </Button>
       </div>
     </div>
+    </>
   );
 };
 

@@ -3,20 +3,23 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   GraduationCap, 
-  Bell, 
   User, 
+  LogOut,
   Menu,
   X
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 
-interface HeaderProps {
-  currentUser?: {
-    name: string;
-    role: 'student' | 'admin';
-  };
-}
+import { useAuth } from "@/contexts/AuthContext";
 
-const Header = ({ currentUser }: HeaderProps) => {
+const Header = () => {
+  const { user: currentUser, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -61,26 +64,25 @@ const Header = ({ currentUser }: HeaderProps) => {
                 Announcements
               </Button>
             </Link>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-              Lost & Found
-            </Button>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-              Timetable
-            </Button>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-              Complaints
-            </Button>
+            <Link to="/lostfound">
+              <Button variant="ghost" className={`text-muted-foreground hover:text-foreground ${location.pathname === '/lostfound' ? 'text-primary bg-primary/10' : ''}`}>
+                Lost & Found
+              </Button>
+            </Link>
+            <Link to="/timetable">
+              <Button variant="ghost" className={`text-muted-foreground hover:text-foreground ${location.pathname === '/timetable' ? 'text-primary bg-primary/10' : ''}`}>
+                Timetable
+              </Button>
+            </Link>
+            <Link to="/complaints">
+              <Button variant="ghost" className={`text-muted-foreground hover:text-foreground ${location.pathname === '/complaints' ? 'text-primary bg-primary/10' : ''}`}>
+                Complaints
+              </Button>
+            </Link>
           </nav>
 
           {/* Right Section */}
           <div className="flex items-center space-x-3">
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-xs text-white rounded-full flex items-center justify-center">
-                3
-              </span>
-            </Button>
 
             {/* User Profile */}
             {currentUser ? (
@@ -89,9 +91,25 @@ const Header = ({ currentUser }: HeaderProps) => {
                   <p className="text-sm font-medium text-foreground">{currentUser.name}</p>
                   <p className="text-xs text-muted-foreground capitalize">{currentUser.role}</p>
                 </div>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <User className="h-5 w-5" />
-                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full" title="Account options">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center w-full">
+                        <User className="mr-2 h-4 w-4" /> Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" /> Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <Button variant="campus" size="sm">
@@ -135,15 +153,21 @@ const Header = ({ currentUser }: HeaderProps) => {
                   Announcements
                 </Button>
               </Link>
-              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                Lost & Found
-              </Button>
-              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                Timetable
-              </Button>
-              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                Complaints
-              </Button>
+              <Link to="/lostfound">
+                <Button variant="ghost" className={`w-full justify-start text-muted-foreground hover:text-foreground ${location.pathname === '/lostfound' ? 'text-primary bg-primary/10' : ''}`}> 
+                  Lost & Found
+                </Button>
+              </Link>
+              <Link to="/timetable">
+                <Button variant="ghost" className={`w-full justify-start text-muted-foreground hover:text-foreground ${location.pathname === '/timetable' ? 'text-primary bg-primary/10' : ''}`}> 
+                  Timetable
+                </Button>
+              </Link>
+              <Link to="/complaints">
+                <Button variant="ghost" className={`w-full justify-start text-muted-foreground hover:text-foreground ${location.pathname === '/complaints' ? 'text-primary bg-primary/10' : ''}`}> 
+                  Complaints
+                </Button>
+              </Link>
             </div>
           </nav>
         )}

@@ -1,6 +1,8 @@
+import Header from "@/components/Header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { 
   Megaphone, 
   Search, 
@@ -14,60 +16,84 @@ import {
   Bell
 } from "lucide-react";
 
+import { useAnnouncements } from "@/hooks/useAnnouncements";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLostFound } from "@/hooks/useLostFound";
+import { useTimetable } from "@/hooks/useTimetable";
+import { useComplaints } from "@/hooks/useComplaints";
+import dayjs from "dayjs";
+import { useState } from "react";
+import api from "@/services/api";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
 const Dashboard = () => {
+  const { user } = useAuth();
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ title: '', content: '', category: 'academic', image: undefined as File | undefined });
+  const [showComplaint,setShowComplaint]=useState(false);
+  const [complaint,setComplaint]=useState({category:'general',description:''});
+  const categories = [
+    {id:'academic',label:'Academic'},
+    {id:'events',label:'Events'},
+    {id:'facility',label:'Facility'},
+    {id:'urgent',label:'Urgent'}
+  ];
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { data: announcements = [] } = useAnnouncements();
+  const { data: items = [] } = useLostFound();
+  const { data: timetable } = useTimetable();
+  const { data: complaints = [] } = useComplaints();
+
+  const today = dayjs().format('dddd');
+  const todaySlots = (timetable?.slots ?? []).filter((s:any)=>s.day===today);
+
   const quickStats = [
-    { label: "New Announcements", value: "5", icon: Megaphone, color: "text-info" },
-    { label: "Lost Items Found", value: "12", icon: Search, color: "text-success" },
-    { label: "Today's Classes", value: "6", icon: Calendar, color: "text-warning" },
-    { label: "Open Complaints", value: "2", icon: FileText, color: "text-destructive" }
+    { label: "New Announcements", value: announcements.length.toString(), icon: Megaphone, route: "/announcements" },
+    { label: "Lost Items", value: items.length.toString(), icon: Search, route: "/lostfound" },
+    { label: "Today's Classes", value: todaySlots.length.toString(), icon: Calendar, route: "/timetable" },
+    { label: "Open Complaints", value: complaints.filter((c:any)=>c.status!=="Resolved").length.toString(), icon: FileText, route: "/complaints" }
   ];
 
-  const recentAnnouncements = [
-    {
-      id: 1,
-      title: "Mid-term Examination Schedule Released",
-      content: "The mid-term examination schedule for all departments has been published.",
-      time: "2 hours ago",
-      priority: "high",
-      category: "Academic"
-    },
-    {
-      id: 2,
-      title: "Library Extended Hours",
-      content: "Library will be open 24/7 during exam weeks starting next Monday.",
-      time: "5 hours ago",
-      priority: "medium",
-      category: "Facility"
-    },
-    {
-      id: 3,
-      title: "Campus Fest Registration Open",
-      content: "Registration for annual campus cultural fest is now open. Limited slots available.",
-      time: "1 day ago",
-      priority: "low",
-      category: "Events"
-    }
-  ];
+  const recentAnnouncements = announcements.slice(0,3).map((a:any)=>({
+    id: a._id,
+    title: a.title,
+    content: a.content,
+    time: dayjs(a.createdAt).fromNow(),
+    priority: 'medium',
+    category: a.category
+  }));
 
-  const upcomingClasses = [
-    { subject: "Data Structures", time: "10:00 AM", room: "CS-101", professor: "Dr. Smith" },
-    { subject: "Database Management", time: "02:00 PM", room: "CS-205", professor: "Prof. Johnson" },
-    { subject: "Software Engineering", time: "04:00 PM", room: "CS-301", professor: "Dr. Williams" }
-  ];
+  
+  
+
+  const upcomingClasses = todaySlots.slice(0,3).map((s:any)=>({
+    subject: s.subject,
+    time: `${s.startTime} - ${s.endTime}`,
+    room: s.location || '',
+    professor: ''
+  }));
 
   const recentActivity = [
-    { action: "Found item reported", item: "Blue Backpack", time: "30 min ago", type: "found" },
-    { action: "Complaint resolved", item: "AC Repair - Room 204", time: "2 hours ago", type: "resolved" },
-    { action: "New announcement", item: "Exam Schedule", time: "3 hours ago", type: "announcement" }
+    ...items.slice(0,3).map((i:any)=>({ action: 'Lost item reported', item: i.description, time: dayjs(i.createdAt).fromNow(), type: 'lost' })),
+    ...complaints.slice(0,3).map((c:any)=>({ action: `Complaint ${c.status}`, item: c.category, time: dayjs(c.updatedAt || c.createdAt).fromNow(), type: 'complaint' }))
   ];
 
+
+
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <>
+      <Header />
+      <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-primary rounded-2xl p-6 text-white shadow-glow">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back, John!</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back, {user?.name || 'Student'}!</h1>
             <p className="text-white/90">Here's what's happening on campus today</p>
           </div>
           <div className="hidden md:block">
@@ -82,7 +108,10 @@ const Dashboard = () => {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {quickStats.map((stat, index) => (
-          <Card key={index} className="p-4 bg-card/80 backdrop-blur-sm border-border/50 shadow-card hover:shadow-elegant transition-all duration-300 group cursor-pointer">
+          <Card
+            key={index}
+            className="p-4 bg-card/80 backdrop-blur-sm border-border/50 shadow-card hover:shadow-elegant transition-all duration-300 group cursor-pointer"
+            onClick={() => quickStats[index].route && navigate(quickStats[index].route)}>
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-gradient-primary rounded-lg group-hover:animate-glow">
                 <stat.icon className="h-5 w-5 text-white" />
@@ -136,9 +165,11 @@ const Dashboard = () => {
                 <Calendar className="h-5 w-5 mr-2 text-primary" />
                 Today's Classes
               </h2>
-              <Button variant="ghost" size="icon">
-                <Plus className="h-4 w-4" />
-              </Button>
+              {user?.role === 'admin' && (
+                <Button variant="ghost" size="icon" onClick={() => setShowAdd(true)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <div className="space-y-3">
               {upcomingClasses.map((cls, index) => (
@@ -200,9 +231,15 @@ const Dashboard = () => {
       <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50 shadow-card">
         <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Button variant="campus-outline" className="h-20 flex-col space-y-2">
-            <Megaphone className="h-6 w-6" />
-            <span className="text-sm">Post Announcement</span>
+          {user?.role === 'admin' && (
+            <Button variant="campus-outline" className="h-20 flex-col space-y-2" onClick={() => setShowAdd(true)}>
+              <Megaphone className="h-6 w-6" />
+              <span className="text-sm">Post Announcement</span>
+            </Button>
+          )}
+          <Button variant="campus-outline" className="h-20 flex-col space-y-2" onClick={()=>setShowComplaint(true)}>
+            <FileText className="h-6 w-6" />
+            <span className="text-sm">File Complaint</span>
           </Button>
           <Button variant="campus-outline" className="h-20 flex-col space-y-2">
             <Search className="h-6 w-6" />
@@ -212,13 +249,60 @@ const Dashboard = () => {
             <Calendar className="h-6 w-6" />
             <span className="text-sm">Add Class</span>
           </Button>
-          <Button variant="campus-outline" className="h-20 flex-col space-y-2">
-            <FileText className="h-6 w-6" />
-            <span className="text-sm">File Complaint</span>
-          </Button>
         </div>
       </Card>
+
+      {/* Post Announcement Modal (admin only) */}
+      {user?.role === 'admin' && (
+       <Dialog open={showAdd} onOpenChange={setShowAdd}>
+        <DialogContent className="space-y-3">
+          <DialogHeader>Post Announcement</DialogHeader>
+          <input aria-label="Title" className="border rounded p-2 w-full" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
+          <textarea aria-label="Content" className="border rounded p-2 w-full" rows={4} placeholder="Content" value={form.content} onChange={e=>setForm({...form,content:e.target.value})}/>
+          <select aria-label="Category" className="border rounded p-2 w-full" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}>
+            {categories.map(c=> <option key={c.id} value={c.id}>{c.label}</option>)}
+          </select>
+          <input type="file" accept="image/*" onChange={e=>setForm({...form,image:e.target.files?.[0]})}/>
+          <DialogFooter>
+            <Button onClick={async()=>{
+              const fd=new FormData();
+              fd.append('title',form.title);
+              fd.append('content',form.content);
+              fd.append('category',form.category);
+              if(form.image) fd.append('image',form.image);
+              await api.post('/announcements',fd,{headers:{'Content-Type':'multipart/form-data'}});
+              queryClient.invalidateQueries({ queryKey: ['announcements'] });
+              setShowAdd(false);
+            }}>Publish</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+)}
+
+      {/* File Complaint Modal */}
+      {showComplaint && (
+        <Dialog open={showComplaint} onOpenChange={setShowComplaint}>
+          <DialogContent className="space-y-3">
+            <DialogHeader>File Complaint</DialogHeader>
+            <select aria-label="Category" className="border rounded p-2 w-full" value={complaint.category} onChange={e=>setComplaint({...complaint,category:e.target.value})}>
+              <option value="general">General</option>
+              <option value="facility">Facility</option>
+              <option value="academic">Academic</option>
+            </select>
+            <textarea aria-label="Description" className="border rounded p-2 w-full" rows={4} placeholder="Describe issue" value={complaint.description} onChange={e=>setComplaint({...complaint,description:e.target.value})}/>
+            <DialogFooter>
+              <Button onClick={async()=>{
+                await api.post('/complaints',complaint);
+                queryClient.invalidateQueries({queryKey:['complaints']});
+                setShowComplaint(false);
+                setComplaint({category:'general',description:''});
+              }}>Submit</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
+    </>
   );
 };
 
