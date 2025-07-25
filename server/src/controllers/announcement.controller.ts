@@ -29,6 +29,16 @@ export const updateAnnouncement = async (req: Request, res: Response) => {
   }
 };
 
+export const likeAnnouncement = async (req: Request, res: Response) => {
+  const ann = await Announcement.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } }, { new: true });
+  res.json(ann);
+};
+
+export const viewAnnouncement = async (req: Request, res: Response) => {
+  const ann = await Announcement.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }, { new: true });
+  res.json(ann);
+};
+
 export const deleteAnnouncement = async (req: Request, res: Response) => {
   await Announcement.findByIdAndDelete(req.params.id);
   res.status(204).end();

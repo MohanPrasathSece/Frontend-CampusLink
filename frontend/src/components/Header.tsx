@@ -17,9 +17,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const { user: currentUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -105,7 +107,7 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+                    <DropdownMenuItem onSelect={()=>{logout();navigate('/login');}} className="text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" /> Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>

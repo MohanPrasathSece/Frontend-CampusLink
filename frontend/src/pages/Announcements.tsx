@@ -273,9 +273,8 @@ const Announcements = () => {
                 <Badge variant={getCategoryColor(announcement.category) as any}>
                   {announcement.category.charAt(0).toUpperCase() + announcement.category.slice(1)}
                 </Badge>
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority ?? 'medium')}`}>
-                  {(announcement.priority ?? 'medium').toUpperCase()}
-                </div>
+                {/* priority badge removed */}
+                  
               </div>
               <span className="text-sm text-muted-foreground">{announcement.timestamp}</span>
             </div>

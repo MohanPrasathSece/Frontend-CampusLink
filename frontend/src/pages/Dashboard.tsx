@@ -96,12 +96,7 @@ const Dashboard = () => {
             <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back, {user?.name || 'Student'}!</h1>
             <p className="text-white/90">Here's what's happening on campus today</p>
           </div>
-          <div className="hidden md:block">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <div className="text-2xl font-bold">23°C</div>
-              <div className="text-sm text-white/80">Sunny</div>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -241,11 +236,11 @@ const Dashboard = () => {
             <FileText className="h-6 w-6" />
             <span className="text-sm">File Complaint</span>
           </Button>
-          <Button variant="campus-outline" className="h-20 flex-col space-y-2">
+          <Button variant="campus-outline" className="h-20 flex-col space-y-2" onClick={()=>navigate('/timetable/add')}>
             <Search className="h-6 w-6" />
             <span className="text-sm">Report Lost Item</span>
           </Button>
-          <Button variant="campus-outline" className="h-20 flex-col space-y-2">
+          <Button variant="campus-outline" className="h-20 flex-col space-y-2" onClick={()=>navigate('/timetable/add')}>
             <Calendar className="h-6 w-6" />
             <span className="text-sm">Add Class</span>
           </Button>

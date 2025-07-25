@@ -17,7 +17,10 @@ const AnnouncementSchema = new Schema<IAnnouncement>(
     content: { type: String, required: true },
     category: { type: String, required: true },
     imageUrl: { type: String },
-    author: { type: Schema.Types.ObjectId, ref: 'User', required: true }
+    author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    likes: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
+    comments: { type: Number, default: 0 }
   },
   { timestamps: true }
 );

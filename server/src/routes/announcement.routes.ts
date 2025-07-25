@@ -1,11 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import {
-  createAnnouncement,
-  deleteAnnouncement,
-  getAnnouncements,
-  updateAnnouncement
-} from '../controllers/announcement.controller.js';
+import { createAnnouncement, getAnnouncements, updateAnnouncement, deleteAnnouncement, likeAnnouncement, viewAnnouncement } from '../controllers/announcement.controller.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { Role } from '../models/User.js';
 
@@ -22,6 +17,8 @@ const upload = multer({ storage });
 
 // Public route - anyone can view announcements
 router.get('/', getAnnouncements);
+router.post('/:id/like', likeAnnouncement);
+router.post('/:id/view', viewAnnouncement);
 
 // Authenticated routes
 router.use(authenticate);
