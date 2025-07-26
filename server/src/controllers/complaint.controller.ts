@@ -10,12 +10,8 @@ export const createComplaint = async (req: Request, res: Response) => {
   res.status(201).json(complaint);
 };
 
-export const getComplaints = async (req: Request, res: Response) => {
-  if (req.user!.role === 'admin') {
-    const list = await Complaint.find();
-    return res.json(list);
-  }
-  const list = await Complaint.find({ student: req.user!.id });
+export const getComplaints = async (_req: Request, res: Response) => {
+  const list = await Complaint.find();
   res.json(list);
 };
 

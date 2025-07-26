@@ -69,19 +69,25 @@ const Announcements = () => {
   }, []);
 
   // admin form state
-  const [newAnn, setNewAnn] = useState<Omit<Announcement, "_id">>({ title: "", content: "", category: "academic" });
+  const [newAnn, setNewAnn] = useState<Omit<Announcement, "_id" | "imageUrl">>({ title: "", content: "", category: "academic" });
+  const [imageFile, setImageFile] = useState<File | undefined>(undefined);
 
   const handleCreate = async () => {
     try {
-      await api.post("/announcements", newAnn);
-      toast({ title: "Announcement posted" });
-      const res = await api.get("/announcements");
+      const fd = new FormData();
+      Object.entries(newAnn).forEach(([k,v])=>fd.append(k, v as string));
+      if(imageFile) fd.append('image', imageFile);
+      await api.post('/announcements', fd, { headers:{'Content-Type':'multipart/form-data'}});
+      toast({title:'Announcement posted'});
+      const res = await api.get('/announcements');
       setAnnouncements(res.data);
-      setNewAnn({ title: "", content: "", category: "academic" });
+      setNewAnn({ title:'', content:'', category:'academic' });
+      setImageFile(undefined);
     } catch {
-      toast({ title: "Create failed", variant: "destructive" });
+      toast({title:'Create failed', variant:'destructive'});
     }
   };
+  
 
   /*
     {
@@ -246,6 +252,7 @@ const Announcements = () => {
               <option key={c.id} value={c.id}>{c.label}</option>
             ))}
           </select>
+          <input type="file" accept="image/*" onChange={e=> setImageFile(e.target.files?.[0])} />
           <Button onClick={handleCreate}>Publish</Button>
         </Card>
       )}
@@ -279,36 +286,24 @@ const Announcements = () => {
               <span className="text-sm text-muted-foreground">{announcement.timestamp}</span>
             </div>
 
-            <h2 className="text-xl font-bold text-foreground mb-3 hover:text-primary transition-colors cursor-pointer">
-              {announcement.title}
-            </h2>
+          <h2 className="text-xl font-bold text-foreground mb-3 hover:text-primary transition-colors cursor-pointer">
+            {announcement.title}
+          </h2>
 
-            <p className="text-muted-foreground mb-4 leading-relaxed">
-              {announcement.content}
-            </p>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{typeof announcement.author === 'string' ? announcement.author : announcement.author?.name}</p>
-                  <p className="text-xs text-muted-foreground">{announcement.role}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <span className="flex items-center space-x-1">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{announcement.comments}</span>
-                </span>
-                <span>{announcement.views} views</span>
-                <Button variant="ghost" size="sm" className="text-primary hover:text-primary-glow">
-                  ❤️ {announcement.likes}
-                </Button>
-              </div>
+          {announcement.imageUrl && (
+            <img src={`${api.defaults.baseURL?.replace('/api','')}${announcement.imageUrl}`} alt={announcement.title} className="w-full max-h-64 object-cover rounded mb-3" />
+          )}
+          <p className="text-muted-foreground mb-4 leading-relaxed">{announcement.content}</p>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+              <User className="h-4 w-4 text-white" />
             </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">{typeof announcement.author === 'string' ? announcement.author : announcement.author?.name}</p>
+              {announcement.role && (<p className="text-xs text-muted-foreground">{announcement.role}</p>)}
+            </div>
+          </div>
+
           </Card>
         ))}
       </div>

@@ -7,7 +7,7 @@ export interface ILostFound extends Document {
   category: string;
   location: string;
   reporter: mongoose.Types.ObjectId;
-  responses: { finder: mongoose.Types.ObjectId; imageUrl: string; message: string; createdAt: Date }[];
+  responses: { finder: mongoose.Types.ObjectId; imageUrl: string; message: string; contact?: string; createdAt: Date }[];
   createdAt: Date;
   isResolved: boolean;
 }
@@ -26,6 +26,7 @@ const LostFoundSchema = new Schema<ILostFound>(
         finder: { type: Schema.Types.ObjectId, ref: 'User' },
         imageUrl: String,
         message: String,
+        contact: String,
         createdAt: { type: Date, default: Date.now }
       }
     ]

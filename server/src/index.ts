@@ -9,6 +9,9 @@ import announcementRoutes from './routes/announcement.routes.js';
 import lostFoundRoutes from './routes/lostfound.routes.js';
 import timetableRoutes from './routes/timetable.routes.js';
 import complaintRoutes from './routes/complaint.routes.js';
+import skillRoutes from './routes/skill.routes.js';
+import techNewsRoutes from './routes/technews.routes.js';
+import pollRoutes from './routes/poll.routes.js';
 
 dotenv.config();
 
@@ -25,6 +28,9 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/lostfound', lostFoundRoutes);
 app.use('/api/timetable', timetableRoutes);
 app.use('/api/complaints', complaintRoutes);
+app.use('/api/skills', skillRoutes);
+app.use('/api/technews', techNewsRoutes);
+app.use('/api/polls', pollRoutes);
 
 // Root health check
 app.get('/', (_, res) => res.send('CampusLink API running'));

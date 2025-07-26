@@ -15,6 +15,9 @@ import Complaints from "./pages/Complaints";
 import Timetable from "./pages/Timetable";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import SkillMarket from "./pages/SkillMarket";
+import Polls from "./pages/Polls";
+import TechNews from "./pages/TechNews";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +38,9 @@ const App = () => (
           <Route path="/timetable" element={<PrivateRoute><Timetable/></PrivateRoute>} />
           <Route path="/complaints" element={<PrivateRoute><Complaints/></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile/></PrivateRoute>} />
+          <Route path="/skills" element={<PrivateRoute><SkillMarket/></PrivateRoute>} />
+          <Route path="/polls" element={<PrivateRoute><Polls/></PrivateRoute>} />
+          <Route path="/technews" element={<PrivateRoute><TechNews/></PrivateRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

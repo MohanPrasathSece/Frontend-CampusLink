@@ -13,7 +13,8 @@ import {
   MapPin,
   User,
   TrendingUp,
-  Bell
+  Bell,
+  Newspaper
 } from "lucide-react";
 
 import { useAnnouncements } from "@/hooks/useAnnouncements";
@@ -21,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLostFound } from "@/hooks/useLostFound";
 import { useTimetable } from "@/hooks/useTimetable";
 import { useComplaints } from "@/hooks/useComplaints";
+import { useTechNews } from "@/hooks/useTechNews";
 import dayjs from "dayjs";
 import { useState } from "react";
 import api from "@/services/api";
@@ -45,6 +47,7 @@ const Dashboard = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: announcements = [] } = useAnnouncements();
+  const { data: techNews = [] } = useTechNews();
   const { data: items = [] } = useLostFound();
   const { data: timetable } = useTimetable();
   const { data: complaints = [] } = useComplaints();
@@ -56,7 +59,8 @@ const Dashboard = () => {
     { label: "New Announcements", value: announcements.length.toString(), icon: Megaphone, route: "/announcements" },
     { label: "Lost Items", value: items.length.toString(), icon: Search, route: "/lostfound" },
     { label: "Today's Classes", value: todaySlots.length.toString(), icon: Calendar, route: "/timetable" },
-    { label: "Open Complaints", value: complaints.filter((c:any)=>c.status!=="Resolved").length.toString(), icon: FileText, route: "/complaints" }
+    { label: "Open Complaints", value: complaints.filter((c:any)=>c.status!=="Resolved").length.toString(), icon: FileText, route: "/complaints" },
+    { label: "Tech Opportunities", value: techNews.length.toString(), icon: Newspaper, route: "/technews" }
   ];
 
   const recentAnnouncements = announcements.slice(0,3).map((a:any)=>({
@@ -129,13 +133,13 @@ const Dashboard = () => {
                 <Megaphone className="h-5 w-5 mr-2 text-primary" />
                 Recent Announcements
               </h2>
-              <Button variant="campus-outline" size="sm">
+              <Button variant="campus-outline" size="sm" onClick={() => navigate('/announcements')}>
                 View All
               </Button>
             </div>
             <div className="space-y-4">
               {recentAnnouncements.map((announcement) => (
-                <div key={announcement.id} className="p-4 bg-secondary/30 rounded-xl border border-border/30 hover:border-primary/30 transition-colors">
+                <div key={announcement.id} className="p-4 bg-secondary/30 rounded-xl border border-border/30 hover:border-primary/30 transition-colors cursor-pointer" onClick={() => navigate('/announcements')}>
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <Badge variant={announcement.priority === 'high' ? 'destructive' : announcement.priority === 'medium' ? 'default' : 'secondary'}>
@@ -235,6 +239,10 @@ const Dashboard = () => {
           <Button variant="campus-outline" className="h-20 flex-col space-y-2" onClick={()=>setShowComplaint(true)}>
             <FileText className="h-6 w-6" />
             <span className="text-sm">File Complaint</span>
+          </Button>
+          <Button variant="campus-outline" className="h-20 flex-col space-y-2" onClick={()=>navigate('/skills')}> 
+            <User className="h-6 w-6" />
+            <span className="text-sm">Offer Skill</span>
           </Button>
           <Button variant="campus-outline" className="h-20 flex-col space-y-2" onClick={()=>navigate('/timetable/add')}>
             <Search className="h-6 w-6" />

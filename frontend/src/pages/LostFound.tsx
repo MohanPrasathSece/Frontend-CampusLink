@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 import { toast } from "@/components/ui/use-toast";
 
 interface ResponseEntry {
+  contact?: string;
   finder: { _id: string; name: string; email: string };
   imageUrl?: string;
   message: string;
@@ -67,7 +68,8 @@ const LostFound = () => {
   const [filterCat, setFilterCat] = useState("all");
   const [filterDate, setFilterDate] = useState("all");
   const [replyTarget, setReplyTarget] = useState<LostItem | null>(null);
-  const [replyForm, setReplyForm] = useState({ message: "", image: undefined as File | undefined });
+  const [viewingResponses, setViewingResponses] = useState<LostItem | null>(null);
+  const [replyForm, setReplyForm] = useState({ message: "", contact: "", image: undefined as File | undefined });
 
   const [reportForm, setReportForm] = useState({
     title: "",
@@ -137,22 +139,32 @@ const LostFound = () => {
         </div>
 
         {/* List */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((item: LostItem) => (
             <Card
-            key={item._id}
-            className={`p-4 space-y-2 ${item.isResolved ? 'border border-green-500 bg-green-50' : ''}`}
-          >
+              key={item._id}
+              className={`p-3 space-y-2 ${item.isResolved ? 'border border-green-500 bg-green-50' : ''}`}
+            >
               {item.imageUrl && (
                 <img
                   src={`${api.defaults.baseURL?.replace('/api', '')}${item.imageUrl}`}
                   alt={item.title}
-                  className="h-48 w-full object-cover rounded"
+                  className="w-full h-48 object-cover rounded-md"
                 />
               )}
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold text-lg">{item.title}</h2>
-                {item.isResolved && <Badge className="bg-green-500 text-white">Found</Badge>}
+                {item.isResolved && (
+                  <Badge variant="default" className="bg-green-500 text-white">Found</Badge>
+                )}
+                {/* Processing badge for reporter */}
+                {!item.isResolved && item.reporter === user?.id && (item.responses?.length ?? 0) > 0 && (
+                  <Badge variant="outline" className="bg-yellow-400 text-black">Processing</Badge>
+                )}
+                {/* Processing badge for finder who already responded */}
+                {!item.isResolved && item.reporter !== user?.id && item.responses?.some(r=>r.finder._id===user?.id) && (
+                  <Badge variant="outline" className="bg-yellow-400 text-black">Processing</Badge>
+                )}
               </div>
               <p className="text-muted-foreground text-sm">{item.description}</p>
               <div className="flex gap-2 items-center text-sm">
@@ -160,33 +172,15 @@ const LostFound = () => {
                 <span>{dayjs(item.createdAt).fromNow()}</span>
               </div>
               <p className="text-sm text-foreground/80">Location: {item.location}</p>
-              {/* Responses for reporter */}
-              {item.reporter === user?.id && item.responses && item.responses.length > 0 && (
-                <div className="border-t pt-2 space-y-2">
-                  <h3 className="text-sm font-semibold">Responses</h3>
-                  {item.responses.map((r, idx) => (
-                    <div key={idx} className="p-2 border rounded space-y-1">
-                      <div className="text-sm">
-                        <span className="font-medium">{r.finder.name}</span> ({r.finder.email})
-                        <span className="ml-2 text-xs text-muted-foreground">{dayjs(r.createdAt).fromNow()}</span>
-                      </div>
-                      <p className="text-sm whitespace-pre-line">{r.message}</p>
-                      {r.imageUrl && (
-                        <img
-                          src={`${api.defaults.baseURL?.replace('/api', '')}${r.imageUrl}`}
-                          alt="response-image" className="h-40 w-auto rounded"
-                        />
-                      )}
-                      <Button size="sm" variant="destructive" onClick={() => handleClose(item._id)}>Close</Button>
-                    </div>
-                  ))}
-                </div>
-              )}
               {/* Reply Found button for non-reporters */}
-              {item.reporter !== user?.id && !item.isResolved && (
-                <Button size="sm" variant="info" onClick={() => setReplyTarget(item)}>
-                  I found it
-                </Button>
+              {/* Show reply button only if user hasn't already responded */}
+               {item.reporter !== user?.id && !item.isResolved && !item.responses?.some(r=>r.finder._id===user?.id) && (
+                 <Button size="sm" variant="info" onClick={() => setReplyTarget(item)}>
+                   I found it
+                 </Button>
+               )}
+              {item.reporter === user?.id && (item.responses?.length ?? 0) > 0 && (
+                <Button size="sm" variant="outline" onClick={() => setViewingResponses(item)}>View Responses</Button>
               )}
               {/* Admin resolve */}
               {(user?.role === "admin" || item.reporter === user?.id) && !item.isResolved && (
@@ -268,6 +262,11 @@ const LostFound = () => {
             value={replyForm.message}
             onChange={(e) => setReplyForm({ ...replyForm, message: e.target.value })}
           />
+          <Input
+            placeholder="Your contact number (optional)"
+            value={replyForm.contact}
+            onChange={(e) => setReplyForm({ ...replyForm, contact: e.target.value })}
+          />
           <Input type="file" accept="image/*" onChange={(e) => setReplyForm({ ...replyForm, image: e.target.files?.[0] })} />
           <DialogFooter>
             <Button
@@ -276,13 +275,14 @@ const LostFound = () => {
                 try {
                   const fd = new FormData();
                   fd.append("message", replyForm.message);
+                  if(replyForm.contact) fd.append("contact", replyForm.contact);
                   if (replyForm.image) fd.append("image", replyForm.image);
                   await api.post(`/lostfound/${replyTarget._id}/respond`, fd, {
                     headers: { "Content-Type": "multipart/form-data" },
                   });
                   toast({ title: "Response sent" });
                   setReplyTarget(null);
-                  setReplyForm({ message: "", image: undefined });
+                  setReplyForm({ message: "", contact: "", image: undefined });
                   refetch();
                 } catch {
                   toast({ title: "Failed", variant: "destructive" });
@@ -292,6 +292,34 @@ const LostFound = () => {
               Send
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View responses dialog */}
+      <Dialog open={!!viewingResponses} onOpenChange={() => setViewingResponses(null)}>
+        <DialogContent>
+          <DialogHeader>Responses for {viewingResponses?.title}</DialogHeader>
+          <div className="space-y-4 py-4">
+            {viewingResponses?.responses?.length ? (
+              viewingResponses.responses.map((r) => (
+                <Card key={r.finder.email} className="p-3 space-y-2">
+                  <p className="font-semibold">{r.finder.name}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">{r.message}</p>
+                  {r.contact && (
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm">Contact: {r.contact}</p>
+                      <Button size="sm" onClick={() => window.open(`tel:${r.contact}`)}>Call</Button>
+                    </div>
+                  )}
+                  {r.imageUrl && (
+                    <img src={`${api.defaults.baseURL?.replace('/api','')}${r.imageUrl}`} alt="evidence" className="w-full max-h-48 object-cover rounded" />
+                  )}
+                </Card>
+              ))
+            ) : (
+              <p>No responses yet.</p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

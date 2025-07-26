@@ -76,6 +76,21 @@ const Header = () => {
                 Timetable
               </Button>
             </Link>
+            <Link to="/skills">
+              <Button variant="ghost" className={`text-muted-foreground hover:text-foreground ${location.pathname === '/skills' ? 'text-primary bg-primary/10' : ''}`}>
+                Skill Market
+              </Button>
+            </Link>
+            <Link to="/polls">
+              <Button variant="ghost" className={`text-muted-foreground hover:text-foreground ${location.pathname === '/polls' ? 'text-primary bg-primary/10' : ''}`}>
+                Polls
+              </Button>
+            </Link>
+            <Link to="/technews">
+              <Button variant="ghost" className={`text-muted-foreground hover:text-foreground ${location.pathname === '/technews' ? 'text-primary bg-primary/10' : ''}`}>
+                Tech Feed
+              </Button>
+            </Link>
             <Link to="/complaints">
               <Button variant="ghost" className={`text-muted-foreground hover:text-foreground ${location.pathname === '/complaints' ? 'text-primary bg-primary/10' : ''}`}>
                 Complaints
@@ -163,6 +178,16 @@ const Header = () => {
               <Link to="/timetable">
                 <Button variant="ghost" className={`w-full justify-start text-muted-foreground hover:text-foreground ${location.pathname === '/timetable' ? 'text-primary bg-primary/10' : ''}`}> 
                   Timetable
+                </Button>
+              </Link>
+              <Link to="/polls">
+                <Button variant="ghost" className={`w-full justify-start text-muted-foreground hover:text-foreground ${location.pathname === '/polls' ? 'text-primary bg-primary/10' : ''}`}> 
+                  Polls
+                </Button>
+              </Link>
+              <Link to="/technews">
+                <Button variant="ghost" className={`w-full justify-start text-muted-foreground hover:text-foreground ${location.pathname === '/technews' ? 'text-primary bg-primary/10' : ''}`}> 
+                  Tech Feed
                 </Button>
               </Link>
               <Link to="/complaints">

@@ -32,7 +32,7 @@ export const addResponse = async (req: Request, res: Response) => {
     const item = await LostFound.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Not found' });
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
-    item.responses.push({ finder: req.user!.id as any, imageUrl, message: req.body.message, createdAt: new Date() });
+    item.responses.push({ finder: req.user!.id as any, imageUrl, message: req.body.message, contact: req.body.contact, createdAt: new Date() });
     await item.save();
     res.json(item);
   } catch {
